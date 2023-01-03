@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="StoreDAO">
+	<!-- 리뷰인서트 -->
+	<insert id="reviewIn" parameterType="store">
+		INSERT INTO STORE_REVIEW (STORE_IDX, MEMBER_ID, STORE_REVIEW_IMG,STORE_REVIEW_SCORE,STORE_REVIEW_CONTENT,STORE_REVIEW_REGDATE)
+		VALUES(#{storeIdx}, #{memberId}, #{storeReviewImg}, #{storeReviewScore}, #{storeReviewContent},TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS'))
+	</insert>
+	
+	<!-- storeIdx로 스토어 회원 정보 찾기 -->
+	<select id="storemember" resultType="member">
+		SELECT m.* FROM MEMBER m, store s WHERE m.member_id = s.member_id and s.store_idx = #{storeIdx}
+	</select>
+	<select id="getList" resultType="store" parameterType="store">
+		SELECT STORE_IDX,
+		STORE_TITLE,
+		STORE_IMG,
+		STORE_DATE,
+		STORE_CATEGORY,
+		STORE_SATISFY,
+		STORE_DEL,
+		MEMBER_ID, TO_CHAR(store_price, 'FM999,999,999,999') AS STORE_PRICE from 
+		store
+	</select>
+	
+	<!-- 좋아요 업데이트 -->
+	<update id="likeUpdete" parameterType="like">
+		INSERT INTO STORE_LIKE
+		VALUES((SELECT NVL(MAX(STORE_LIKE_IDX),0) + 1 FROM STORE_LIKE), #{storeIdx}, #{memberId})
+	</update>
+	
+	<!-- 좋아요 취소 -->
+	<delete id="likeDelete" parameterType="like">
+		DELETE FROM STORE_LIKE WHERE STORE_IDX = #{storeIdx} AND MEMBER_ID = #{memberId}
+	</delete>
+	
+	<!-- 찜 여부 확인 -->
+	<select id="findLikeCnt" resultType="int" parameterType="like">
+		SELECT COUNT(*) FROM STORE_LIKE WHERE MEMBER_ID = #{memberId} AND STORE_IDX = #{storeIdx}
+	</select>
+	
+	<!-- 찜하기 값 확인 -->
+	<select id="findLike" resultType="string" parameterType="string">
+		SELECT STORE_IDX FROM STORE_LIKE WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<!-- 상세보기 -->
+	<select id="detail" parameterType="store" resultType="store">
+		SELECT *
+		FROM STORE WHERE STORE_IDX = #{storeIdx}
+	</select>
+	
+	<select id="member" resultType="member">
+		SELECT * FROM MEMBER WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="storeOption" resultType="store">
+		SELECT * FROM STORE_OPTION WHERE STORE_IDX = #{storeIdx}
+	</select>
+	
+	<select id="storeOrder" resultType="store">
+		SELECT * FROM STORE_OPTION WHERE STORE_OPTION = #{storeOtion}
+	</select>
+	
+	<!-- 결제 내역 인서트 -->
+	<insert id="orderInsert" parameterType="store">
+		INSERT INTO ORDERS(ORDERS_IDX, MEMBER_ID,STORE_IDX, ORDERS_ADDRESS, 
+					ORDERS_RECEIVER, ORDERS_COMMENT, ORDERS_PRICE, ORDERS_DATE, ORDERS_ADDRESSDETAIL,ORDERS_REVIEWCHK)
+		VALUES (#{ordersIdx},#{memberId},#{storeIdx},#{ordersAddress}, #{ordersReceiver},
+				#{ordersComment}, #{ordersPrice}, to_char(SYSDATE, 'YYYY-MM-DD hh24:mi:ss'), #{ordersAddressdtail}, 'n')
+	</insert>
+	
+	<!-- 결제 내역 가져오기 -->
+	<select id="orderinfo" parameterType="store" resultType="store">
+		SELECT * FROM ORDERS WHERE MEMBER_ID = #{memberId} AND ORDERS_IDX = #{ordersIdx}
+	</select>
+	<!-- 12시간 동안 구매 많은 순(전체) -->
+	<select id="nowList" resultType="store">
+		SELECT S.STORE_IDX, S.MEMBER_ID, S.STORE_CATEGORY, S.STORE_IMG, TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE ,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS')
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(푸드) -->
+	<select id="bestfood" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS') and STORE_CATEGORY like '%푸드%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE 
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(패션) -->
+	<select id="bestfashion" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS') and STORE_CATEGORY like '%패션%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(테크) -->
+	<select id="bestTect" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS') and STORE_CATEGORY like '%테크%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(뷰티) -->
+	<select id="bestbeauty" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS') and STORE_CATEGORY like '%뷰티%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(리빙) -->
+	<select id="bestbaby" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS') AND STORE_CATEGORY like '%리빙%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE 
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(여행) -->
+	<select id="bestTrip" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS') AND STORE_CATEGORY like '%여행%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE
+		ORDER BY CNT DESC
+	</select>
+	<!-- 12시간 동안 구매 많은 순(반려동물) -->
+	<select id="bestpet" resultType="store">
+		SELECT S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,TO_CHAR(s.store_price, 'FM999,999,999,999') AS STORE_PRICE,S.STORE_TITLE, COUNT(O.ORDERS_DATE) AS CNT FROM ORDERS O, STORE S
+		WHERE S.STORE_IDX = O.STORE_IDX AND O.ORDERS_DATE >= TO_CHAR(SYSDATE-12/24, 'YYYY-MM-DD HH24:MI:SS')  AND STORE_CATEGORY like '%반려%'
+		GROUP BY S.STORE_IDX,S.MEMBER_ID,S.STORE_CATEGORY,S.STORE_IMG,S.STORE_PRICE,S.STORE_TITLE
+		ORDER BY CNT DESC
+	</select>
+	
+	<!-- 인기, 최근, 만족도(전체) -->
+	<select id="getlistPopular" resultType="store">
+		SELECT s.STORE_IDX,
+		s.STORE_TITLE, s.STORE_IMG, s.STORE_DATE, s.STORE_CATEGORY, s.STORE_SATISFY, s.STORE_DEL,
+		s.MEMBER_ID, TO_CHAR(store_price, 'FM999,999,999,999') AS STORE_PRICE, count(o.STORE_IDX) as cnt
+		FROM STORE s, orders o
+        where s.store_idx = o.store_idx 
+        group by  s.STORE_IDX, s.STORE_TITLE, s.STORE_IMG, s.STORE_DATE, s.STORE_CATEGORY, s.STORE_SATISFY,
+		s.STORE_DEL, s.MEMBER_ID, store_price
+        order by cnt desc
+	</select>
+	<select id="getlistRecent" resultType="store">
+		SELECT STORE_IDX,
+		STORE_TITLE,
+		STORE_IMG,
+		STORE_DATE,
+		STORE_CATEGORY,
+		STORE_SATISFY,
+		STORE_DEL,
+		MEMBER_ID, TO_CHAR(store_price, 'FM999,999,999,999') AS STORE_PRICE FROM STORE
+        order by STORE_IDX desc
+	</select>
+	<select id="getlistSatisfaction" resultType="store">
+		SELECT STORE_IDX,
+		STORE_TITLE,
+		STORE_IMG,
+		STORE_DATE,
+		STORE_CATEGORY,
+		STORE_SATISFY,
+		STORE_DEL,
+		MEMBER_ID, TO_CHAR(STORE_PRICE, 'FM999,999,999,999') AS STORE_PRICE FROM STORE      
+		ORDER BY STORE_SATISFY DESC
+	</select>
+	
+	<select id="getlistPopular1" parameterType="store" resultType="store">
+		SELECT s.STORE_IDX,
+		s.STORE_TITLE, s.STORE_IMG, s.STORE_DATE, s.STORE_CATEGORY, s.STORE_SATISFY, s.STORE_DEL,
+		s.MEMBER_ID, TO_CHAR(store_price, 'FM999,999,999,999') AS STORE_PRICE, count(o.STORE_IDX) as cnt
+		FROM STORE s, orders o
+        where s.store_idx = o.store_idx and s.STORE_CATEGORY Like '%'|| #{storeCategory} ||'%'
+        group by  s.STORE_IDX, s.STORE_TITLE, s.STORE_IMG, s.STORE_DATE, s.STORE_CATEGORY, s.STORE_SATISFY,
+		s.STORE_DEL, s.MEMBER_ID, store_price
+        order by CNT DESC
+	</select>
+	<select id="getlistRecent1" parameterType="store" resultType="store">
+        SELECT STORE_IDX,
+		STORE_TITLE,
+		STORE_IMG,
+		STORE_DATE,
+		STORE_CATEGORY,
+		STORE_SATISFY,
+		STORE_DEL,
+		MEMBER_ID, TO_CHAR(STORE_PRICE, 'FM999,999,999,999') AS STORE_PRICE FROM STORE 
+		WHERE STORE_CATEGORY like '%'|| #{storeCategory} ||'%'    
+		ORDER BY STORE_IDX DESC
+	</select>
+	<select id="getlistSatisfaction1" parameterType="store" resultType="store">
+		SELECT STORE_IDX,
+		STORE_TITLE,
+		STORE_IMG,
+		STORE_DATE,
+		STORE_CATEGORY,
+		STORE_SATISFY,
+		STORE_DEL,
+		MEMBER_ID, TO_CHAR(STORE_PRICE, 'FM999,999,999,999') AS STORE_PRICE FROM STORE 
+		WHERE STORE_CATEGORY like '%'|| #{storeCategory} ||'%'    
+		ORDER BY STORE_SATISFY DESC
+	</select>
+	
+	<select id="getList1" parameterType="store" resultType="store">
+	 SELECT STORE_IDX,
+		STORE_TITLE,
+		STORE_IMG,
+		STORE_DATE,
+		STORE_CATEGORY,
+		STORE_SATISFY,
+		STORE_DEL,
+		MEMBER_ID, TO_CHAR(store_price, 'FM999,999,999,999') AS STORE_PRICE FROM store where STORE_CATEGORY like '%'|| #{storeCategory} ||'%'
+	</select>
+	
+		<!-- 리뷰 -->
+	<select id="storeReview" resultType="store">
+		SELECT * from store_review where store_idx = #{storeIdx}
+		ORDER BY STORE_REVIEW_REGDATE DESC
+	</select>
+	
+	<!-- 리뷰수, 점수 -->
+	<select id="reviewCnt" resultType="store">
+		SELECT COUNT(*) AS CNT, (SUM(STORE_REVIEW_SCORE)/COUNT(*)) AS SUM FROM STORE_REVIEW
+		WHERE STORE_IDX = #{storeIdx}
+	</select>
+	
+	<!-- 리뷰점수 업데이트-->
+	<update id="reviewscoreUodate">
+		UPDATE store 
+		SET STORE_SATISFY = (SELECT (SUM(STORE_REVIEW_SCORE)/COUNT(*)) FROM STORE_REVIEW WHERE STORE_IDX = #{storeIdx}) 
+		WHERE STORE_IDX = #{storeIdx}
+	</update>
+	
+	<!-- 게시글 토탈값 -->
+	<select id="storeTotal" resultType="int">
+		SELECT COUNT(*)FROM STORE
+	</select>
+	
+	<!-- qna -->
+	<select id="qnaList" resultType="store" parameterType="store">
+		SELECT * FROM (SELECT ROWNUM R_NUM, B.* from 
+		(SELECT * from QNA where store_idx = #{storeIdx} ORDER BY qna_idx DESC) B) WHERE R_NUM BETWEEN #{begin} and #{end}
+	</select>
+	
+	<insert id="qnaInsert" parameterType="store" >
+		INSERT INTO QNA(QNA_CATEGORY, QNA_IDX, MEMBER_ID, QNA_TITLE, QNA_CONTENT, QNA_DATE, STORE_IDX )
+		VALUES(#{qnaCategory},(SELECT NVL(MAX(QNA_IDX),0) + 1 FROM QNA), #{memberId}, #{qnaTitle}, #{qnaContent}, SYSDATE,#{storeIdx})
+	</insert>
+	
+	<!-- qna total -->
+	<select id="qnaTotal" resultType="int" >
+		SELECT COUNT(*)FROM QNA WHERE store_Idx = #{storeIdx}
+	</select>
+	
+	<!-- qna View -->
+	<select id="qnaView" resultType="store" parameterType="store">
+		SELECT * FROM QNA WHERE QNA_IDX = #{qnaIdx} AND STORE_IDX = #{storeIdx}
+	</select>
+	
+	<!-- qna 수정 -->
+	<update id="qnamodify"  parameterType="store">
+		update qna set QNA_TITLE = #{qnaTitle},
+              			QNA_CONTENT = #{qnaContent}
+		where qna_idx = #{qnaIdx}
+	</update>
+	
+	<update id="uphit" parameterType="store">
+		UPDATE QNA SET QNA_HIT = QNA_HIT +1 WHERE store_idx = #{storeIdx}
+	</update>
+	<!-- 문의 답글 -->
+	<insert id="reInsert" parameterType="store">
+		INSERT INTO QNA_RE
+		VALUES(#{qnaIdx},#{storeIdx},#{qnaReContent},SYSDATE)
+	</insert>
+	 <update id="update" parameterType="store">
+	 	UPDATE QNA SET QNA_CHANGE = 1
+        WHERE QNA_IDX = #{qnaIdx}
+	 </update>
+	<select id="qnaRe" resultType="store" parameterType="store">
+		select * from qna_re where qna_idx = #{qnaIdx}
+	</select>
+	
+	<!-- 내가 쓴 문의 -->
+	<select id="myQnaList" parameterType="store" resultType="store">
+		select * from qna where member_id = #{memberId} and store_idx = #{storeIdx}
+	</select>
+	<!-- 문의삭제 -->
+	<delete id="qnaDel">
+		DELETE FROM QNA WHERE QNA_IDX = #{qnaIdx}
+	</delete>
+	
+	<!-- 팔로우 여부 확인 -->
+	<select id="followYN" resultType="int" parameterType="store">
+		SELECT COUNT(*) FROM follow WHERE following_id = #{followingId} AND follower_id = #{followerId}
+	</select>
+		<!-- 팔로우 업데이트 -->
+	<update id="followUpdete" parameterType="store">
+		INSERT INTO follow(following_id, follower_id)
+		VALUES(#{followingId}, #{followerId})
+	</update>
+	
+	
+	<!-- 팔로우 취소 -->
+	<delete id="followDelete" parameterType="store">
+		DELETE FROM follow WHERE following_id = #{followingId} AND follower_id = #{followerId}
+	</delete>
+	
+	<!-- 쿠폰 목록 불러오기 -->
+	<select id="couponList" parameterType="store" resultType="store">
+        SELECT DISTINCT * FROM
+	    MYCOUPON M, COUPON C
+	    WHERE C.COUPON_IDX = M.COUPON_IDX
+	    AND C.STORE_IDX = #{storeIdx}
+	    AND M.COUPON_CHECK = 0
+	</select>
+	
+</mapper>
+
+
+
+
+
+

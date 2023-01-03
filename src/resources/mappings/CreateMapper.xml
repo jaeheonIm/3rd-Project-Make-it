@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="createDAO">
+
+	<!-- fundIdx생성 -->
+	<insert id="newFundIdx" parameterType="member">
+	INSERT INTO FUND_TEMP (FUND_IDX, MEMBER_ID)
+	 	VALUES ((SELECT NVL(MAX(TO_NUMBER(FUND_IDX)),0) + 1 FROM FUND_TEMP), #{memberId})
+	</insert>
+	
+	<!-- fundIdx 조회 -->
+	<select id="getFundIdx" parameterType="fund" resultType="fund">
+		SELECT MAX(TO_NUMBER(FUND_IDX)) AS FUND_IDX 
+		FROM FUND_TEMP
+	</select>
+	
+	<!-- 멤버십 저장 -->
+	<update id="saveMembership" parameterType="fund">
+		UPDATE FUND_TEMP
+		SET FUND_MEMBERSHIP = #{fundMembership}, LAST_SAVE_DATE = SYSDATE
+		WHERE FUND_IDX = #{fundIdx}
+	</update>
+	
+	<!-- 기본정보 저장 -->
+	<update id="updateInfor" parameterType="fund">
+	UPDATE FUND_TEMP 
+		SET FUND_TITLE = #{fundTitle}, 
+			FUND_TARGET_PRICE = REPLACE(#{fundTargetPrice}, ',', ''), 
+			FUND_CATEGORY = #{fundCategory}, 
+			FUND_STARTDATE = #{fundStartDate}, 
+			FUND_ENDDATE = #{fundEndDate}, 
+			FUND_TAG = #{fundTag}, 
+			FUND_MAINIMG = CASE WHEN #{fundMainImg} IS NULL THEN FUND_MAINIMG
+							    ELSE #{fundMainImg}
+								 END, 
+			LAST_SAVE_DATE = SYSDATE
+	 		WHERE FUND_IDX = #{fundIdx}
+	</update>
+	
+	<!-- 스토리 사진 저장 -->
+	 <update id="updateStory" parameterType="fund">
+		UPDATE FUND_TEMP
+		SET FUND_DETAILIMG = #{fundDetailImg}, LAST_SAVE_DATE = SYSDATE 
+		WHERE FUND_IDX = #{fundIdx}
+	</update> 
+	
+	<!-- 옵션 저장 전 삭제 -->
+	<delete id="deleteReward" parameterType="fund">
+		DELETE FROM FUND_OPTION_TEMP
+		WHERE FUND_IDX = #{fundIdx}
+	</delete>
+
+	<!-- 옵션 저장 -->
+	<insert id="insertReward" parameterType="java.util.List">
+	<foreach collection="list" item="item" index="index" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+        INTO FUND_OPTION_TEMP (FUND_IDX, FUND_OPTION_TITLE, FUND_OPTION_CONTENT, FUND_OPTION_PRICE, FUND_OPTION_DELIVERY, LAST_SAVE_DATE) 
+        VALUES (#{item.fundIdx}, #{item.fundOptionTitle}, #{item.fundOptionContent}, REPLACE(#{item.fundOptionPrice}, ',', ''), REPLACE(#{item.fundOptionDelivery}, ',', ''), SYSDATE)
+    </foreach>
+	</insert>
+	
+	<!-- 함께할 멤버 이메일이 가입된 이메일인지 확인 -->
+	<select id="checkMemberEmail" parameterType="fund" resultType="member">
+		SELECT MEMBER_ID, MEMBER_EMAIL 
+		FROM MEMBER 
+		WHERE MEMBER_EMAIL = #{fundTeamMember}
+	</select>
+	
+	<!-- 함께할 멤버 이메일이 중복된 이메일인지 확인 -->
+	<select id="checkMemberEmail2" parameterType="fund" resultType="int">
+		SELECT COUNT(*) FROM FUND_TEAM
+		 WHERE FUND_TEAMMEMBER = #{fundTeamMember} AND FUND_IDX = #{fundIdx} 
+ 	</select>
+ 	
+	<!-- 메이커 저장 -->
+	<update id="updateMaker" parameterType="fund">
+		UPDATE FUND_TEMP
+		SET FUND_MAKER_NAME = #{fundMakerName},
+			FUND_MAKER_IMG = CASE WHEN #{fundMakerImg} IS NULL THEN FUND_MAKER_IMG
+								  ELSE #{fundMakerImg}
+								  END, 
+			FUND_MAKER_EMAIL = #{fundMakerEmail},
+			FUND_MAKER_CALLNUMBER = #{fundMakerCallNumber},
+			FUND_MAKER_HOMEPAGE = #{fundMakerHomepage},
+			FUND_TEAMMEMBER = #{fundTeamMember},
+			LAST_SAVE_DATE = SYSDATE
+		WHERE FUND_IDX = #{fundIdx}
+	</update>
+	
+	<!-- 내 펀딩 목록 -->
+	<select id="getMyFundList" parameterType="fund" resultType="fund">
+		SELECT FUND_TITLE, FUND_MAKER_NAME, FUND_MAINIMG
+		FROM FUND_PROJECT
+		WHERE MEMBER_ID = #{memberId} AND FUND_TITLE IS NOT NULL
+	</select>
+	
+	<!-- 펀딩 현황 -->
+	<select id="fundStatus" parameterType="fund" resultType="fund">
+		SELECT FUND_IDX, FUND_TITLE, FUND_CATEGORY, FUND_TARGET_PRICE, TO_CHAR(FUND_ENDDATE, 'YYYY-MM-DD') AS FUND_ENDDATE, FUND_PRICE
+		FROM FUND_PROJECT
+		WHERE FUND_TITLE = #{fundTitle}
+	</select>
+	
+	<!-- 펀딩 현황 찜 개수  -->
+	<select id="findLikeCnt"  parameterType="fund" resultType="String">
+		SELECT COUNT(*) FROM FUND_LIKE 
+		WHERE FUND_IDX = #{fundIdx} 
+	</select>
+	
+	<!-- 펀딩 현황 후원자수 -->
+	<select id="findOrderCnt"  parameterType="fund" resultType="String">
+		SELECT COUNT(*) FROM ORDERS
+		WHERE FUND_IDX = #{fundIdx} 
+	</select>
+	
+	<!-- 펀딩현황- 멤버리스트 -->
+	<select id="fundStatusMemberList" parameterType="fund" resultType="fund">
+		SELECT FUND_TEAMMEMBER, AUTHSTATUS, MEMBER_NAME
+		FROM FUND_TEAM
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	
+	<!-- 펀딩현황 - 결제 목록 -->
+	<select id="fundStatusOrderList" parameterType="fund" resultType="store">
+		SELECT MEMBER_ID, ORDERS_OPTION_TITLE, ORDERS_DATE, ORDERS_PRICE 
+		FROM ORDERS 
+		WHERE FUND_IDX = #{fundIdx}
+		ORDER BY ORDERS_DATE DESC
+	</select>
+	
+	<!-- FUND_TEMP에 저장한 값이 있는 fundIdx 가져오기 -->
+	<select id="fundUpdate" parameterType="member" resultType="fund">
+		SELECT LAST_SAVE_DATE, MEMBER_ID, FUND_IDX 
+		FROM FUND_TEMP 
+		WHERE LAST_SAVE_DATE IS NOT NULL
+				AND MEMBER_ID = #{memberId}
+	</select>
+	
+	<!-- 최종 등록할 idx로 데이터 가져오기 -->
+	<select id="getSaveVo" parameterType="fund" resultType="fund">
+		SELECT *
+		FROM FUND_TEMP
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	<select id="getSaveOptionVo" parameterType="fund" resultType="fund">
+		SELECT *
+		FROM FUND_OPTION_TEMP 
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	
+	<!-- 펀딩 최종 등록 -->
+	<insert id="saveFund" parameterType="fund">
+	INSERT INTO FUND_PROJECT (FUND_IDX, MEMBER_ID, FUND_TITLE, FUND_MEMBERSHIP, FUND_MAINIMG, FUND_DETAILIMG, 
+							FUND_CATEGORY, FUND_TARGET_PRICE, FUND_STARTDATE, FUND_ENDDATE, FUND_TAG, FUND_PRICE, FUND_SUPPORTER,
+							FUND_MAKER_NAME, FUND_MAKER_IMG, FUND_MAKER_EMAIL, FUND_MAKER_HOMEPAGE, FUND_MAKER_CALLNUMBER, FUND_MAKER_ID)
+	 	VALUES (#{fundIdx}, #{memberId}, #{fundTitle}, #{fundMembership}, #{fundMainImg}, #{fundDetailImg}, 
+	 			#{fundCategory}, #{fundTargetPrice}, #{fundStartDate}, #{fundEndDate}, #{fundTag}, 0, 0,
+	 			 #{fundMakerName}, #{fundMakerImg}, #{fundMakerEmail}, #{fundMakerHomepage}, #{fundMakerCallNumber}, #{memberId})
+	</insert>
+
+	<insert id="saveFundOption" parameterType="java.util.List">
+	<foreach collection="list" item="item" index="index" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+        INTO FUND_OPTION (FUND_IDX, FUND_OPTION_PRICE, FUND_OPTION_CONTENT, FUND_OPTION_TITLE, FUND_OPTION_DELIVERY )
+        VALUES (#{item.fundIdx}, #{item.fundOptionPrice}, #{item.fundOptionContent}, #{item.fundOptionTitle}, #{item.fundOptionDelivery})
+    </foreach>
+	</insert>
+	
+	<!-- 펀딩 최종 등록끝-->
+	
+	<!-- 작성중~~~ -->
+	<select id="notNullCheck" parameterType="fund" resultType="fund">
+		SELECT FUND_MEMBERSHIP, FUND_TITLE, FUND_DETAILIMG, FUND_MAKER_NAME
+		FROM FUND_TEMP 
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	
+	<select id="notNullCheckOption" parameterType="fund" resultType="fund">
+		SELECT FUND_OPTION_TITLE
+		FROM FUND_OPTION_TEMP
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	
+	<!-- 작성중 데이터 불러오기 -->
+	<select id="getSaveData" parameterType="fund" resultType="fund">
+		SELECT * 
+		FROM FUND_TEMP 
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	
+	<!-- 작성중 옵션 데이터 불러오기 -->
+	<select id="getSaveOptionData" parameterType="fund" resultType="fund">
+		SELECT * 
+		FROM FUND_OPTION_TEMP 
+		WHERE FUND_IDX = #{fundIdx}
+	</select>
+	
+	  <!-- 생성된 메일 인증키 INSERT -->
+	  <insert id="createAuthkey" parameterType="fund">
+	   <!--  UPDATE FUND_PROJECT SET AUTHKEY = #{param2} WHERE FUND_TEAMMEMBER = #{param1} -->
+	   INSERT INTO FUND_TEAM
+	   VALUES ( #{fundIdx}, REPLACE(#{fundTeamMember}, ',', ''), #{authkey}, '수락 대기중',
+	   (SELECT MEMBER_NAME
+	   	FROM MEMBER
+	  	WHERE MEMBER_EMAIL = REPLACE(#{fundTeamMember}, ',', '')
+	   ))
+	  </insert>
+
+	  <!-- authstatus 컬럼을  '수락 대기중'에서 '멤버 등록'으로 업데이트-->
+	  <update id="updateAuthstatus">
+	      UPDATE FUND_TEAM SET AUTHSTATUS = '멤버 등록' 
+	      WHERE FUND_TEAMMEMBER = #{fundTeamMember} 
+	      AND FUND_IDX = #{fundIdx}
+	  </update>
+	  
+	  <!-- 멤버 삭제 -->
+	  <delete id="memberDelete" parameterType="fund">
+			DELETE FROM FUND_TEAM
+			WHERE FUND_IDX = #{fundIdx}
+			AND FUND_TEAMMEMBER = #{fundTeamMember}
+		</delete>
+	
+
+</mapper>
+	
+	

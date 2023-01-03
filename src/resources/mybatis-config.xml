@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+  
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+
+	<typeAliases>
+		<!-- <typeAlias alias="employeeVO" type="com.mystudy.model.vo.EmployeeVO"/> -->
+		<typeAlias alias="fund" type="com.makeit.fund.FundVO"/>
+		<typeAlias alias="member" type="com.makeit.member.MemberVO"/>
+		<typeAlias alias="cs" type="com.makeit.main.CSVO"/>
+		<typeAlias alias="store" type="com.makeit.storehome.StorehomeVO"/>
+		<typeAlias alias="like" type="com.makeit.like.LikeVO"/>
+		<typeAlias alias="chat" type="com.makeit.main.ChatRoomVO"/>
+		<typeAlias alias="admin" type="com.makeit.member.AdminVO"/>
+		<typeAlias alias="ad" type="com.makeit.member.AdvertisementVO"/>
+	</typeAliases>
+	
+ 
+<!--   
+	=== applicationContext.xml에서 dataSource 설정 사용으로 대체 ===
+	<environments default="development">
+    <environment id="development">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="oracle.jdbc.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@localhost:1521:xe"/>
+        <property name="username" value="mystudy"/>
+        <property name="password" value="mystudypw"/>
+      </dataSource>
+    </environment>
+  </environments> 
+  -->
+  
+  <!-- 스프링 설정 파일 설정 사용 방식으로 사용안함 
+  <mappers>
+    <mapper resource="mappings/board/BoardMapper.xml"/>
+    <mapper resource="mappings/user/UserMapper.xml"/>
+  </mappers>
+  -->
+</configuration>

@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="memberDAO">
+
+	<select id="getmemberId" parameterType="member" resultType="int">
+		SELECT COUNT(*) AS CNT FROM MEMBER WHERE MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="getmemberNickname" parameterType="member" resultType="int">
+		SELECT COUNT(*) AS CNT FROM MEMBER WHERE MEMBER_NICKNAME = #{memberNickname}
+	</select>
+
+	<select id="getmemberEmail" parameterType="member" resultType="int">
+		SELECT COUNT(*) AS CNT FROM MEMBER WHERE MEMBER_EMAIL = #{memberEmail}
+	</select>
+
+	<select id="getmemberPassword" parameterType="member" resultType="int">
+		SELECT COUNT(*) AS CNT FROM MEMBER WHERE MEMBER_ID = #{memberId} AND MEMBER_PWD = #{memberPwd}
+	</select>
+
+	<select id="getMyfunding" parameterType="fund" resultType="fund">
+		SELECT F.* 
+		FROM ORDERS O, FUND_PROJECT F
+		WHERE O.FUND_IDX = F.FUND_IDX
+		AND O.MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="getStoreTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(STORE_IDX) AS CNT 
+		FROM ORDERS WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="getMyStoreList" parameterType="map" resultType="store">
+	   	SELECT * FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT S.*, O.ORDERS_PRICE ,O.ORDERS_IDX FROM ORDERS O, STORE S WHERE O.STORE_IDX = S.STORE_IDX AND O.MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+
+	<select id="getFundTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(FUND_IDX) AS CNT 
+		FROM ORDERS WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="getMyFundList" parameterType="map" resultType="fund">
+	   	SELECT * FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT F.*, O.ORDERS_PRICE ,O.ORDERS_IDX FROM ORDERS O, FUND_PROJECT F WHERE O.FUND_IDX = F.FUND_IDX AND O.MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+
+	<select id="getAskTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) AS CNT 
+		FROM FUND_QNA WHERE MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="getStoreAskTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) AS CNT 
+		FROM QNA WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="getMyAskList" parameterType="map" resultType="fund">
+	   	SELECT * FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM FUND_QNA WHERE MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+
+	<select id="getMyStoreAskList" parameterType="map" resultType="store">
+	   	SELECT * FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM QNA WHERE MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+	
+	<select id="getMyStoreTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) AS CNT 
+		FROM STORE WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="getMyStoreAll" parameterType="map" resultType="store">
+	   	SELECT * FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM STORE WHERE MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+
+	<select id="getMyFundTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) AS CNT 
+		FROM FUND_PROJECT WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="getMyFundAll" parameterType="map" resultType="fund">
+	   	SELECT * FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM FUND_PROJECT WHERE MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+	
+	<select id="getMystore" parameterType="store" resultType="store">
+		SELECT O.* , S.* 
+		FROM ORDERS O, STORE S
+		WHERE O.STORE_IDX = S.STORE_IDX
+		AND O.MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="loginCheck" parameterType="member" resultType="member">
+		SELECT * FROM MEMBER WHERE MEMBER_ID = #{memberId} AND MEMBER_PWD = #{memberPwd}
+	</select>
+	
+	<select id="memberLogin" parameterType="member" resultType="member">
+		SELECT *
+		FROM MEMBER
+		WHERE MEMBER_ID = #{memberId}
+		AND MEMBER_PWD = #{memberPwd}
+	</select>
+
+	<select id="getMember" parameterType="member" resultType="member">
+		SELECT M.*,
+		(SELECT COUNT(MEMBER_ID) FROM FUND_PROJECT WHERE MEMBER_ID = #{memberId}) AS MEMBER_FUND_CNT, 
+		(SELECT COUNT(MEMBER_ID) FROM STORE WHERE MEMBER_ID = #{memberId}) AS MEMBER_STORE_CNT
+		FROM MEMBER M
+		WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<insert id="insertMember" parameterType="member">
+		INSERT INTO MEMBER (MEMBER_ID, MEMBER_PWD, MEMBER_NAME, MEMBER_ADDRESS, MEMBER_PHONE, 
+							MEMBER_EMAIL, MEMBER_BIRTH, MEMBER_INTEREST, MEMBER_PICTURE, MEMBER_NICKNAME)
+	 	VALUES (#{memberId}, #{memberPwd}, #{memberName}, #{memberAddress}, #{memberPhone},
+	 			#{memberEmail}, #{memberBirth}, #{memberInterest}, #{memberPicture}, #{memberNickname})
+	</insert>
+
+	<insert id="insertMemberCard" parameterType="member">
+		INSERT INTO CARD (MEMBER_ID, CARD_CATEGORY, CARD_NUMBER, CARD_EXPIRATION, CARD_SECURITY)
+	 	VALUES (#{memberId}, #{cardCategory}, #{cardNumber}, #{cardExpiration}, #{cardSecurity})
+	</insert>
+	
+	<update id="updateMember" parameterType="member">
+		UPDATE MEMBER 
+		SET MEMBER_NAME = #{memberName},
+			MEMBER_NICKNAME = #{memberNickname},
+			MEMBER_BIRTH = #{memberBirth},
+			MEMBER_ADDRESS = #{memberAddress},
+			MEMBER_PHONE = #{memberPhone},
+			MEMBER_EMAIL = #{memberEmail}
+		WHERE MEMBER_ID = #{memberId}	
+	</update>
+
+	<update id="updatePassword" parameterType="member">
+		UPDATE MEMBER 
+		SET MEMBER_PWD = #{memberPwd}
+		WHERE MEMBER_ID = #{memberId}	
+	</update>
+
+	<update id="updateProfile" parameterType="member">
+		UPDATE MEMBER 
+		SET MEMBER_PICTURE = #{memberPicture},
+			MEMBER_INTEREST = #{memberInterest}
+		WHERE MEMBER_ID = #{memberId}	
+	</update>
+
+	<update id="deleteMember" parameterType="member">
+		UPDATE MEMBER 
+		SET MEMBER_NICKNAME = #{memberNickname}
+		WHERE MEMBER_ID = #{memberId}	
+	</update>
+	
+	<select id="makeitMypageLike" parameterType="fund" resultType="fund">
+		SELECT P.*, L.*
+		FROM FUND_PROJECT P , FUND_LIKE L
+		WHERE P.FUND_IDX = L.FUND_IDX
+		AND L.MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="getStoreLike" parameterType="store" resultType="store">
+		SELECT S.*
+		FROM STORE S , STORE_LIKE L
+		WHERE S.STORE_IDX = L.STORE_IDX
+		AND L.MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="getMonthData" resultType="admin">
+		SELECT 
+	    SUBSTR(ORDERS_DATE, 0, 7) AS MONTH_DATE,
+	    SUM(ORDERS_PRICE) AS MONTH_PRICE , AVG(ORDERS_PRICE) AS MONTH_AVG
+		FROM ORDERS
+		GROUP BY SUBSTR(ORDERS_DATE, 0, 7)
+		ORDER BY SUBSTR(ORDERS_DATE, 0, 7)
+	</select>
+
+	<select id="getDailyData" resultType="admin">
+		SELECT 
+	    SUBSTR(ORDERS_DATE, 0, 10) AS DAILY_DATE,
+	    SUM(ORDERS_PRICE) AS DAILY_PRICE , AVG(ORDERS_PRICE) AS DAILY_AVG
+		FROM ORDERS
+		GROUP BY SUBSTR(ORDERS_DATE, 0, 10)
+		ORDER BY SUBSTR(ORDERS_DATE, 0, 10)
+	</select>
+
+	<select id="getAdMonthData" resultType="admin">
+		SELECT 
+		SUBSTR(AD_ORDERS_DATE, 0, 7) AS MONTH_DATE,
+		SUM(AD_ORDERS_PRICE) AS AD_MONTH_PRICE , AVG(AD_ORDERS_PRICE) AS AD_MONTH_AVG
+		FROM ADORDERS
+		GROUP BY SUBSTR(AD_ORDERS_DATE, 0, 7)
+		ORDER BY SUBSTR(AD_ORDERS_DATE, 0, 7)
+	</select>
+
+	<select id="getAdDailyData" resultType="admin">
+		SELECT 
+		SUBSTR(AD_ORDERS_DATE, 0, 10) AS MONTH_DATE,
+		SUM(AD_ORDERS_PRICE) AS AD_DAILY_PRICE , AVG(AD_ORDERS_PRICE) AS AD_DAILY_AVG
+		FROM ADORDERS
+		GROUP BY SUBSTR(AD_ORDERS_DATE, 0, 10)
+		ORDER BY SUBSTR(AD_ORDERS_DATE, 0, 10)
+	</select>
+
+	<select id="getPieData" resultType="admin">
+		SELECT COUNT(S.STORE_CATEGORY) AS CATEGORY_CNT, S.STORE_CATEGORY AS CATEGORY
+		FROM STORE S , ORDERS O
+		WHERE S.STORE_IDX = O.STORE_IDX
+		GROUP BY S.STORE_CATEGORY
+		ORDER BY COUNT(S.STORE_CATEGORY) DESC
+	</select>
+
+	<select id="getFundPie" resultType="admin">
+		SELECT COUNT(F.FUND_CATEGORY) AS FUND_CATEGORY_CNT, F.FUND_CATEGORY AS FUND_CATEGORY
+		FROM FUND_PROJECT F , ORDERS O
+		WHERE F.FUND_IDX = O.FUND_IDX
+		GROUP BY F.FUND_CATEGORY
+		ORDER BY COUNT(F.FUND_CATEGORY) DESC
+	</select>
+
+	<select id="rank" resultType="admin">
+		SELECT DISTINCT S.*, DENSE_RANK() OVER (ORDER BY O.STORE_IDX) RANK 
+		FROM ORDERS O , STORE S
+		WHERE O.STORE_IDX = S.STORE_IDX
+		ORDER BY RANK
+	</select>
+
+	<select id="getAdminMember" resultType="member">
+		SELECT *
+		FROM MEMBER 
+		WHERE MEMBER_ID NOT IN (SELECT MEMBER_ID FROM FUND_PROJECT)
+	</select>
+
+	<select id="getMakerMember" resultType="member">
+		SELECT *
+		FROM MEMBER 
+		WHERE MEMBER_ID IN (SELECT MEMBER_ID FROM FUND_PROJECT)
+	</select>
+
+	<select id="myfundProject" resultType="fund">
+		SELECT * FROM FUND_PROJECT WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	
+	<select id="myfundingAjax" parameterType="member" resultType="fund">
+		SELECT * FROM FUND_PROJECT WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="myPageFunding" parameterType="member" resultType="fund">
+		SELECT * FROM FUND_PROJECT WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="myPageStore" parameterType="member" resultType="store">
+		SELECT * FROM STORE WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<delete id="deleteMypageStore" parameterType="store">
+		DELETE FROM ORDERS WHERE ORDERS_IDX = #{ordersIdx}
+	</delete>
+
+	<delete id="deleteMypageFunding" parameterType="fund">
+		DELETE FROM ORDERS WHERE ORDERS_IDX = #{ordersIdx}
+	</delete>
+	
+	<insert id="advertise" parameterType="ad">
+		INSERT INTO ADVERTISEMENT (AD_IDX, MEMBER_ID, FUND_IDX, AD_START_DATE, AD_END_DATE, AD_PRICE , AD_POSITION)
+	 	VALUES ((SELECT NVL(MAX(AD_IDX),0) + 1 FROM ADVERTISEMENT), #{memberId}, #{fundIdx}, #{adStartDate}, #{adEndDate}, #{adPrice}, #{adPosition})
+	</insert>
+	
+	<select id="adminAd" resultType="ad">
+		SELECT A.* , P.* 
+		FROM ADVERTISEMENT A , FUND_PROJECT P
+		WHERE A.FUND_IDX = P.FUND_IDX
+		ORDER BY A.AD_IDX
+	</select>
+	
+	<update id="adCheckUpdate" parameterType="ad">
+		UPDATE ADVERTISEMENT 
+		SET AD_CHECK = 1
+		WHERE AD_IDX = #{adIdx}	
+	</update>
+
+	<update id="adCheckUpdate2" parameterType="ad">
+		UPDATE ADVERTISEMENT 
+		SET AD_CHECK = 0
+		WHERE AD_IDX = #{adIdx}	
+	</update>
+
+	<update id="adCheckUpdate3" parameterType="ad">
+		UPDATE ADVERTISEMENT 
+		SET AD_CHECK = 2
+		WHERE AD_IDX = #{adIdx}	
+	</update>
+	
+	<select id="memberFundCnt" parameterType="member" resultType="int">
+		SELECT COUNT(FUND_IDX) AS MEMBER_FUND_CNT FROM ORDERS WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="memberStoreCnt" parameterType="member" resultType="int">
+		SELECT COUNT(STORE_IDX) AS MEMBER_STORE_CNT FROM ORDERS WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="memberAdList" parameterType="member" resultType="ad">
+		SELECT A.* , (SELECT COUNT(AD_IDX) FROM ADVERTISEMENT WHERE AD_CHECK = 1 AND MEMBER_ID = #{memberId}) AS AD_CNT
+		FROM ADVERTISEMENT A
+		WHERE MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="adPay" parameterType="ad" resultType="ad">
+		SELECT A.* , F.FUND_TITLE, M.MEMBER_NAME, M.MEMBER_PHONE, M.MEMBER_EMAIL
+		FROM ADVERTISEMENT A, FUND_PROJECT F, MEMBER M
+		WHERE A.FUND_IDX = F.FUND_IDX
+		AND F.MEMBER_ID = M.MEMBER_ID
+		AND A.AD_IDX = #{adIdx}
+	</select>
+	
+	<insert id="adOrderInsert" parameterType="ad">
+		INSERT INTO ADORDERS(AD_ORDERS_IDX, MEMBER_ID, AD_ORDERS_PRICE, AD_ORDERS_DATE, AD_ORDERS_TITLE, AD_ORDERS_PHONE)
+		VALUES (#{adOrdersIdx}, #{memberId}, #{adOrdersPrice}, to_char(SYSDATE, 'YYYY-MM-DD hh24:mi:ss'), #{adOrdersTitle}, #{adOrdersPhone})
+	</insert>
+	
+	<select id="adPayinfo" parameterType="ad" resultType="ad">
+		SELECT * FROM ADORDERS WHERE MEMBER_ID = #{memberId} AND AD_ORDERS_IDX = #{adOrdersIdx}
+	</select>
+
+	<select id="couponStore" resultType="store">
+		SELECT STORE_TITLE, STORE_IDX FROM STORE
+	</select>
+
+	<select id="couponFund" resultType="fund">
+		SELECT FUND_TITLE, FUND_IDX FROM FUND_PROJECT
+	</select>
+	
+	<insert id="insertCoupon" parameterType="admin">
+		INSERT INTO COUPON (COUPON_IDX, STORE_IDX, COUPON_PRICE, COUPON_TITLE, COUPON_CONTENT, COUPON_START_DATE, COUPON_END_DATE)
+		VALUES ((SELECT NVL(MAX(COUPON_IDX),0) + 1 FROM COUPON), #{storeIdx}, #{couponPrice}, #{couponTitle}, #{couponContent}, #{couponStartDate}, #{couponEndDate})
+	</insert>
+
+	<insert id="insertFundCoupon" parameterType="admin">
+		INSERT INTO COUPON (COUPON_IDX, FUND_IDX, COUPON_PRICE, COUPON_TITLE, COUPON_CONTENT, COUPON_START_DATE, COUPON_END_DATE)
+		VALUES ((SELECT NVL(MAX(COUPON_IDX),0) + 1 FROM COUPON), #{fundIdx}, #{couponPrice}, #{couponTitle}, #{couponContent}, #{couponStartDate}, #{couponEndDate})
+	</insert>
+	
+	<select id="couponTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) 
+        FROM COUPON
+		WHERE COUPON_IDX NOT IN (SELECT COUPON_IDX FROM MYCOUPON WHERE MEMBER_ID = #{memberId})
+        AND COUPON_START_DATE <![CDATA[ < ]]>= TO_CHAR(SYSDATE, 'YYYY.MM.DD') 
+		AND COUPON_END_DATE > TO_CHAR(SYSDATE, 'YYYY.MM.DD')
+	</select>
+
+	<select id="myCouponCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) 
+		FROM MYCOUPON
+		WHERE COUPON_CHECK = 1
+		AND MEMBER_ID = #{memberId}
+	</select>
+
+	<select id="couponHistoryTotalCnt" parameterType="string" resultType="int">
+		SELECT COUNT(*) 
+		FROM MYCOUPON
+		WHERE COUPON_CHECK = 0
+		AND MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="couponTotalList" resultType="admin">
+   	SELECT *
+		FROM ( SELECT ROWNUM R_NUM, B.*
+	            	  FROM (SELECT * 
+                            FROM COUPON
+                            WHERE COUPON_IDX NOT IN (SELECT COUPON_IDX FROM MYCOUPON WHERE MEMBER_ID = #{memberId})
+                            AND COUPON_START_DATE <![CDATA[ < ]]>= TO_CHAR(SYSDATE, 'YYYY.MM.DD') 
+                            AND COUPON_END_DATE > TO_CHAR(SYSDATE, 'YYYY.MM.DD')) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select> 
+
+	<select id="myCouponList" parameterType="map" resultType="admin">
+   	SELECT *
+		FROM ( SELECT ROWNUM R_NUM, B.*
+	            	  FROM (SELECT C.*, M.MEMBER_ID 
+	                        FROM COUPON C , MYCOUPON M 
+	                        WHERE C.COUPON_IDX = M.COUPON_IDX 
+	                        AND M.COUPON_CHECK = 1
+	                        AND M.MEMBER_ID = #{memberId}) B)
+		WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select> 
+
+	<select id="myCouponHistory" parameterType="map" resultType="admin">
+   	SELECT *
+		FROM ( SELECT ROWNUM R_NUM, B.*
+	            	  FROM (SELECT C.*, M.MEMBER_ID , M.COUPON_CHECK
+                            FROM MYCOUPON M , COUPON C
+                            WHERE C.COUPON_IDX = M.COUPON_IDX
+                            AND M.COUPON_CHECK = 0
+                            AND M.MEMBER_ID = #{memberId}) B)
+          WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select> 
+	
+	<insert id="couponDown" parameterType="map">
+		INSERT INTO MYCOUPON (MEMBER_ID, COUPON_IDX, COUPON_CHECK)
+		VALUES (#{memberId}, #{couponIdx}, 1)
+	</insert>
+	
+	<!-- 좋아요 업데이트 -->
+	<update id="fundLikeUpdate1" parameterType="like">
+		INSERT INTO FUND_LIKE
+		VALUES((SELECT NVL(MAX(FUND_LIKE_IDX),0) + 1 FROM FUND_LIKE), #{fundIdx}, #{memberId})
+	</update>
+	
+	<!-- 좋아요 취소 -->
+	<delete id="fundLikeDelete1" parameterType="like">
+		DELETE FROM FUND_LIKE WHERE FUND_IDX = #{fundIdx} AND MEMBER_ID = #{memberId}
+	</delete>
+	
+	<!-- 찜 여부 확인 -->
+	<select id="fundLikeCnt1" resultType="int" parameterType="like">
+		SELECT COUNT(*) FROM FUND_LIKE WHERE MEMBER_ID = #{memberId} AND FUND_IDX = #{fundIdx}
+	</select>
+</mapper>
+
+
+
+
+
+

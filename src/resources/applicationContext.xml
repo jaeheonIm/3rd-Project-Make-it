@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<!-- base-package 여러개 선언 방식 
+	<context:component-scan base-package="com.spring.biz.board" />
+	<context:component-scan base-package="com.spring.biz.user" />
+	-->
+
+	<!-- base-package 설정위치 포함 하위 패키지 모두 검색처리
+		   구분 사용 나열 (빈칸, 콤마, 세미콜른 등) -->
+	<context:component-scan base-package="com.makeit.fund, com.makeit.member, com.makeit.storehome, com.makeit.create, com.makeit.main" />
+	
+		<!-- ===== Spring JDBC 관련 설정 ===== -->
+	<!--  DataSource 설정 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="oracle.jdbc.OracleDriver"/>
+		<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe"/>
+		<property name="username" value="MAKEIT"/>
+		<property name="password" value="MAKEIT"/>
+	</bean>
+	
+	<!-- 스프링 JDBC : JdbcTemplate 객체 생성 -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- ===================================================================================== -->
+	<!-- 스프링-마이바티스 연동 설정 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations" value="classpath:mappings/**/*Mapper.xml"></property>
+	</bean>
+	
+	<bean class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+	
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    	<constructor-arg ref="dataSource" />	
+	</bean>
+</beans>

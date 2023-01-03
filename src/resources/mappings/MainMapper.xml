@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MainDAO">
+<!--========================================Main=================================================-->
+	<!-- 배너 가져오기 -->
+	<select id="getMainBanner" resultType="fund">
+	SELECT B.*
+	FROM (SELECT DISTINCT F.*
+	FROM FUND_PROJECT F, (SELECT FUND_IDX FROM ADVERTISEMENT WHERE AD_CHECK >=2 AND AD_END_DATE > SYSDATE ORDER BY AD_START_DATE ASC) A
+	WHERE F.FUND_IDX = A.FUND_IDX)B
+	WHERE ROWNUM &lt;=3
+	</select>
+	
+	<!-- 취향맞춤 목록 가져오기 -->
+	<select id="getMainPick" parameterType="String" resultType="int">
+	SELECT COUNT(*) FROM MEMBER WHERE MEMBER_INTEREST LIKE '%' || #{category} || '%'
+	</select>
+	<select id="getCategoryContentOne" parameterType="String" resultType="fund">
+	SELECT * FROM FUND_PROJECT WHERE FUND_CATEGORY = #{key} AND FUND_IDX=(SELECT MAX(FUND_IDX)AS IDX FROM FUND_PROJECT WHERE FUND_CATEGORY = #{key} )
+	</select>
+	
+	<!-- 실시간 랭킹 가져오기 -->
+	<select id="getMainRank" resultType="fund">
+	SELECT *
+	FROM ( SELECT B.*
+            	  FROM (SELECT FUND_IDX, FUND_TITLE,FUND_PRICE/FUND_TARGET_PRICE*100 AS TARGET_RATE, FUND_TARGET_PRICE ,FUND_PRICE,FUND_MAINIMG,FUND_CATEGORY FROM FUND_PROJECT ORDER BY TARGET_RATE DESC) B)
+	WHERE ROWNUM &lt;= 5
+	</select>
+	<select id="mainrankAjax" resultType="store">
+	SELECT C.CNT,S.*
+	FROM STORE S,(SELECT * FROM ( SELECT B.*
+            	  					FROM (SELECT STORE_IDX, COUNT(STORE_IDX)AS CNT FROM ORDERS GROUP BY STORE_IDX ORDER BY CNT DESC) B)
+				  WHERE ROWNUM &lt;= 5 )C
+	WHERE S.STORE_IDX = C.STORE_IDX ORDER BY CNT DESC,STORE_DATE
+	</select>
+
+	<!-- 스토어추천제품출력기능 -->
+	<select id="getStorePopularity" parameterType="map" resultType="int">
+	SELECT IDX
+	FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT COUNT(S.IDX)AS CNT,S.IDX
+                            FROM (SELECT a.STORE_IDX AS IDX,NVL(b.STORE_IDX,0) FROM STORE a,STORE_LIKE b WHERE a.STORE_IDX = b.STORE_IDX(+))S
+                            GROUP BY S.IDX ORDER BY CNT DESC) B)
+	WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+	<select id="getStoreContent" parameterType="int" resultType="store">
+	SELECT * FROM STORE WHERE STORE_IDX=#{li}
+	</select>
+	<select id="getScore" parameterType="int" resultType="String">
+	SELECT TRUNC(AVG(NVL(STORE_REVIEW_SCORE, 0)),1)  AS STORE_REVIEW_SCORE FROM STORE_REVIEW where store_idx=#{li}
+	</select>
+	
+	<!-- Fund ' feed 가져오기 -->
+	<select id="getFundReview" resultType="fund">
+	SELECT B.*
+	FROM ( SELECT ROW_NUMBER() OVER(ORDER BY FUND_REVIEW_REGDATE DESC) AS R_NUM, R.FUND_REVIEW_IDX,R.FUND_REVIEW_IMG,R.FUND_REVIEW_CONTENT,R.FUND_REVIEW_REGDATE,P.*
+              FROM FUND_REVIEW R,FUND_PROJECT P WHERE P.FUND_IDX=R.FUND_IDX)B
+	WHERE B.R_NUM &lt;= 3
+	</select>
+	<select id="mainFeedAjax" resultType="store">
+	SELECT B.*
+	FROM (
+	     SELECT ROW_NUMBER() OVER(ORDER BY STORE_REVIEW_REGDATE DESC) AS R_NUM, R.STORE_REVIEW_IMG,R.STORE_REVIEW_SCORE,R.STORE_REVIEW_CONTENT,R.STORE_REVIEW_REGDATE,S.*
+	         FROM STORE_REVIEW R,STORE S WHERE R.STORE_IDX=S.STORE_IDX)B
+	 WHERE B.R_NUM &lt;= 3
+	</select>
+	
+	<!-- 회원의 favorite중 하나 가져오기 -->
+	<select id="getMemberLikeCategory" parameterType="String" resultType="String">
+	SELECT MEMBER_INTEREST FROM MEMBER WHERE MEMBER_ID= #{memberId}
+	</select>
+	
+	<!-- 좋아할~가져오기 -->
+	<select id="getMemberLike" parameterType="Map" resultType="fund">
+	 SELECT *
+	 FROM ( SELECT ROWNUM R_NUM, B.*
+            	FROM (SELECT * FROM FUND_PROJECT WHERE FUND_CATEGORY=#{category}) B)
+	 WHERE R_NUM &lt;=1
+	</select>
+	<!-- 좋아할~가져오기2 -->
+	<select id="getMemberLike2" parameterType="Map" resultType="fund">
+	 SELECT *
+	 FROM ( SELECT ROWNUM R_NUM, B.*
+            	FROM (SELECT * FROM FUND_PROJECT WHERE FUND_CATEGORY=#{category}) B)
+	 WHERE R_NUM &lt;=5
+	</select>
+	
+	<!-- #좋아한 가져오기 -->
+	<select id="getFundLike" resultType="fund">
+	SELECT P.*
+	FROM FUND_PROJECT P, (SELECT FUND_IDX, COUNT(FUND_IDX)AS CNT FROM FUND_LIKE GROUP BY FUND_IDX ORDER BY CNT DESC)B
+	WHERE P.FUND_IDX=B.FUND_IDX
+	</select>
+	
+	<!-- #마감임박 가져오기 -->
+	<select id="getfundExpire" resultType="fund">
+	SELECT *
+	FROM ( SELECT B.*
+            	  FROM (SELECT * FROM FUND_PROJECT WHERE FUND_ENDDATE BETWEEN SYSDATE AND SYSDATE+3 ORDER BY FUND_ENDDATE ASC) B)
+	WHERE ROWNUM &lt;= 4
+	</select>
+	
+	<!-- 오늘오픈한 프로젝트 가져오기 -->
+	<select id="getTodayOpen" parameterType="String" resultType="fund">
+    SELECT *
+	FROM ( SELECT ROWNUM R_NUM, B.*
+           	 FROM (SELECT * FROM FUND_PROJECT WHERE FUND_STARTDATE=#{today}) B)
+	WHERE R_NUM &lt;=5
+	</select>
+	
+	<!-- 오픈예정 프로젝트 가져오기 -->
+	<select id="getNextdayOpen" parameterType="String" resultType="fund">
+    SELECT *
+	FROM ( SELECT ROWNUM R_NUM, B.*
+           	 	FROM (SELECT * FROM FUND_PROJECT WHERE FUND_STARTDATE &gt; #{today}) B)
+	WHERE R_NUM &lt;=5
+	</select>
+	
+	<!-- 찜하기 유무 -->
+	<select id="mainFundLikeAjax" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM FUND_LIKE WHERE FUND_IDX=#{fundIdx} AND MEMBER_ID=#{memberId}
+	</select>
+	<!-- 찜목록에 없으면 추가하기 -->
+	<insert id="mainInsertFundLike" parameterType="Map">
+	INSERT INTO FUND_LIKE
+	VALUES((SELECT NVL(MAX(FUND_LIKE_IDX),0) + 1 FROM FUND_LIKE),#{fundIdx},#{memberId})
+	</insert>
+	
+	<!-- 팔로우 리스트 가져오기 -->
+	<select id="getMainFollow" resultType="member">
+	SELECT C.*
+	FROM ( SELECT B.MEMBER_FUND_CNT,M.*
+            FROM (SELECT MEMBER_ID,COUNT(*) AS MEMBER_FUND_CNT FROM ORDERS GROUP BY MEMBER_ID ORDER BY MEMBER_FUND_CNT DESC) B, MEMBER M WHERE B.MEMBER_ID=M.MEMBER_ID)C
+	WHERE ROWNUM &lt;=4
+	</select>
+
+	<!-- 팔로우 리스트 가져오기 -->
+	<select id="mainFollowingFind" parameterType="String" resultType="String">
+	SELECT FOLLOWING_ID FROM FOLLOW WHERE FOLLOWER_ID = #{memberId}
+	</select>
+	<select id="mainFollowFundList" parameterType="String" resultType="fund">
+	SELECT C.*
+	FROM ( SELECT * FROM FUND_PROJECT WHERE MEMBER_ID=#{id} ORDER BY FUND_STARTDATE DESC)C
+	WHERE ROWNUM &lt;=1
+	</select>
+
+	
+	
+	
+	
+<!--========================================Notice=================================================-->
+	<!-- 공지사항 전체목록 출력기능 -->
+ 	<select id="getNoticeList" resultType="cs">
+   	SELECT *
+	FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM CS ORDER BY CS_IDX DESC) B)
+	WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select> 
+	
+	<!-- 공지사항 카테고리별목록 출력기능 -->
+	<select id="getNoticeCategoryList" parameterType="map" resultType="cs">
+   	SELECT *
+	FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM CS WHERE CS_CATEGORY=#{category} ORDER BY CS_IDX DESC) B)
+	WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select>
+	
+	<!-- 공지사항 전체 갯수 -->
+	<select id="getNoticeTotalCnt" resultType="int">
+	SELECT COUNT(*) FROM CS
+	</select>
+	
+	<!-- 공지사항 공지 갯수 -->
+	<select id="getNoticeCategoryCnt" parameterType="string" resultType="int">
+	SELECT COUNT(*) FROM CS WHERE CS_CATEGORY=#{category}
+	</select>
+	
+	<!-- 검색 갯수 -->
+	<select id="getSearchwordTotalCnt" parameterType="string" resultType="int">
+	SELECT COUNT(*) FROM CS WHERE CS_TITLE LIKE '%'||#{searchword}||'%'
+	</select>
+
+	<!-- 공지사항 전체목록 출력기능 -->
+ 	<select id="getSearchList" parameterType="map" resultType="cs">
+   	SELECT *
+	FROM ( SELECT ROWNUM R_NUM, B.*
+            	  FROM (SELECT * FROM CS WHERE CS_TITLE LIKE '%'||#{searchword}||'%' ORDER BY CS_IDX DESC) B)
+	WHERE R_NUM BETWEEN #{begin} AND #{end}
+	</select> 
+	
+	<!-- 공지사항 글 상세보기 -->
+ 	<select id="noticeDetail" parameterType="int" resultType="cs">
+	SELECT * FROM CS WHERE CS_IDX = #{idx}
+	</select>
+	 
+	<!-- 게시글에 하트('좋아요')기능 :CS 테이블에 추가 -->
+	<update id="heartUpdate" parameterType="int">
+	UPDATE CS SET CS_HEART=CS_HEART+1 WHERE CS_IDX=#{csIdx}
+	</update>
+	
+	<!-- 게시글에 하트('좋아요')기능 : CS_LIKE테이블에 추가 -->
+	<insert id="heartMember" parameterType="map">
+   	INSERT INTO CS_LIKE
+	VALUES((SELECT NVL(MAX(CS_LIKE_IDX),0) + 1 FROM CS_LIKE),#{csIdx},#{memberId})
+	</insert>
+	
+	<!-- 게시글 하트 취소기능 : CS테이블에서 -1 -->
+	<update id="heartDelete" parameterType="int">
+	UPDATE CS SET CS_HEART=CS_HEART-1 WHERE CS_IDX=#{csIdx}
+	</update>
+	
+	<!-- 게시글 하트 취소기능 : CS_LIKE테이블에서 제거  -->
+	<delete id="heartMemberDelete" parameterType="map">
+	DELETE FROM CS_LIKE WHERE CS_IDX=#{csIdx} AND MEMBER_ID=#{memberId}
+	</delete>
+	
+	<!-- 게시글 한개 출력 -->
+	<select id="boardOne" parameterType="int" resultType="cs">
+	SELECT * FROM CS WHERE CS_IDX=#{idx}
+	</select>
+	
+	<!-- 좋아요유무 -->
+	<select id="heartYN" parameterType="map" resultType="int">
+	SELECT COUNT(*) FROM CS_LIKE WHERE MEMBER_ID=#{memberId} AND CS_IDX=#{csIdx}
+	</select>
+
+<!--========================================Q&A=================================================-->
+	<select id="getChatRoomList" resultType="chat">
+	SELECT * FROM CHATROOM ORDER BY REGDATE ASC
+	</select>
+
+	<select id="getChatRoomNum" resultType="int">
+	SELECT MAX(ROOMNUMBER) FROM CHATROOM
+	</select>
+	<insert id="chatNumberSearch">
+    INSERT INTO CHATROOM
+	VALUES((SELECT NVL(MAX(ROOMNUMBER),0) + 1 FROM CHATROOM),'상담요청',#{memberId},'',SYSDATE,0,'user('||NVL(#{memberId},'')||'),')
+	</insert>
+	
+	<delete id="deleteChatRoom" parameterType="String">
+	DELETE FROM CHATROOM WHERE ROOMNUMBER=#{chatnum}
+	</delete>
+	<update id="insertConversation" parameterType="Map">
+	UPDATE CHATROOM SET CONN=#{conn}, CONVERSATION=CONVERSATION ||#{authority} ||':' || #{conversation}||',' WHERE ROOMNUMBER=#{rN}
+	</update>
+	
+	<select id="getconversation" parameterType="String" resultType="String">
+	SELECT CONVERSATION FROM CHATROOM WHERE ROOMNUMBER=#{roomnumber}
+	</select>
+	
+	<!-- 채팅유지 여부 확인 -->
+	<select id="SearchChatRoom" parameterType="String" resultType="int">
+	SELECT COUNT(*) FROM CHATROOM WHERE ROOMNUMBER=#{roomNumber}
+	</select>
+	
+	<!-- 상담사용 채팅읽음 확인11 -->
+	<update id="insertCheckAdmin" parameterType="Map">
+	UPDATE CHATROOM SET CONN=#{conn},PARTICIPANTS=PARTICIPANTS||#{authority} WHERE ROOMNUMBER=#{roomNumber}
+	</update>
+	<!-- 상담사용 채팅읽음 확인22 -->
+	<update id="deleteParticipant" parameterType="Map">
+  	UPDATE CHATROOM SET PARTICIPANTS=REPLACE(PARTICIPANTS, #{authority}, '')WHERE ROOMNUMBER=#{roomNumber}
+	</update>
+<!--========================================Follow=================================================-->
+	<!-- 팔로우 첫페이지 데이터 가져오기 -->
+	<select id="getFollowMemberList" resultType="member" parameterType="String">
+	SELECT C.*
+	FROM ( SELECT B.TOTALCNT,M.*
+            FROM (SELECT MEMBER_ID,COUNT(*) AS TOTALCNT FROM ORDERS GROUP BY MEMBER_ID ORDER BY TOTALCNT DESC) B, MEMBER M WHERE B.MEMBER_ID=M.MEMBER_ID AND NOT M.MEMBER_ID=#{memberID})C
+	WHERE ROWNUM &lt;=30
+	</select>
+	<select id="getfollowcnt" parameterType="string" resultType="int">
+	SELECT COUNT(*) FROM FOLLOW WHERE FOLLOWER_ID=#{id}
+	</select>
+	<select id="getfollowinglist" parameterType="String" resultType="String">
+	SELECT FOLLOWING_ID FROM FOLLOW WHERE FOLLOWER_ID=#{memberId}	
+	</select>
+
+	<!-- 팔로우 여부 -->
+	<select id="followAdd" parameterType="Map" resultType="int">
+	SELECT COUNT(*) FROM FOLLOW WHERE FOLLOWING_ID = #{followmemberId} AND FOLLOWER_ID=#{memberId}
+	</select>
+	<!-- 팔로우 취소 -->
+	<delete id="deleteFollow" parameterType="Map">
+	DELETE FROM FOLLOW WHERE FOLLOWING_ID = #{followmemberId} AND FOLLOWER_ID=#{memberId}
+	</delete>
+	<!-- 팔로우 추가 -->
+	<insert id="insertFollow" parameterType="Map">
+	INSERT INTO FOLLOW VALUES(#{followmemberId},#{memberId})
+	</insert>
+	
+<!--========================================Profile=================================================-->
+	<!-- 프로필 정보 가져오기 -->
+	<select id="getProfileInfo" parameterType="String" resultType="member">
+	SELECT * FROM MEMBER WHERE MEMBER_ID=#{profileId}
+	</select>
+	<select id="getCnt" parameterType="String" resultType="int">
+	SELECT NVL(COUNT(*),0)AS TOTALCNT FROM ORDERS WHERE MEMBER_ID=#{profileId}
+	</select>
+	
+	<!-- 팔로잉수 -->
+	<select id="getProfileFollwing" parameterType="String" resultType="int">
+	SELECT COUNT(*) FROM FOLLOW WHERE FOLLOWING_ID=#{profileId}
+	</select>
+	
+	<!-- 팔로워수 -->
+	<select id="getProfileFollwer" parameterType="String" resultType="int">
+	SELECT COUNT(*) FROM FOLLOW WHERE FOLLOWER_ID=#{profileId}
+	</select>
+
+	<!-- 펀딩한 리스트 가져오기 -->
+	<select id="getProfileFund" parameterType="String" resultType="fund">
+	SELECT * FROM FUND_PROJECT WHERE MEMBER_ID= #{profileId}  ORDER BY FUND_ENDDATE DESC,FUND_STARTDATE DESC 
+	</select>
+	
+	<select id="getFundCnt" parameterType="String" resultType="int">
+	SELECT COUNT(*) FROM FUND_PROJECT WHERE MEMBER_ID=#{profileId}
+	</select>
+	
+	<select id="profileColumAjax" parameterType="String" resultType="fund">
+	SELECT P.*
+	FROM FUND_PROJECT P,(SELECT * FROM FUND_LIKE WHERE MEMBER_ID=#{profileid})L
+	WHERE P.FUND_IDX = L.FUND_IDX
+	ORDER BY FUND_ENDDATE DESC,FUND_STARTDATE DESC
+	</select>
+
+<!--========================================Feed=================================================-->
+	<select id="getFundFeedList" resultType="fund">
+	SELECT B.*
+	FROM ( SELECT  R.*,P.FUND_TITLE,P.FUND_MAINIMG,P.FUND_CATEGORY,P.FUND_STARTDATE,P.FUND_ENDDATE,P.FUND_TARGET_PRICE,P.FUND_PRICE
+              FROM FUND_REVIEW R,FUND_PROJECT P WHERE P.FUND_IDX=R.FUND_IDX ORDER BY FUND_REVIEW_REGDATE DESC)B
+	</select>
+
+	<select id="getStoreFeedList" resultType="store">
+	SELECT S.STORE_IDX,s.STORE_TITLE,s.STORE_PRICE,s.STORE_IMG,s.STORE_DATE,s.STORE_CATEGORY,s.STORE_SATISFY,s.STORE_DEL,s.STORE_DEL2,s.STORE_NICKNAME,r.MEMBER_ID,R.STORE_REVIEW_IMG,R.STORE_REVIEW_SCORE,R.STORE_REVIEW_CONTENT,R.STORE_REVIEW_REGDATE
+	FROM STORE S, STORE_REVIEW R
+	WHERE S.STORE_IDX = R.STORE_IDX
+	ORDER BY STORE_REVIEW_REGDATE DESC
+	</select>
+	
+	<select id="getMember" parameterType="String" resultType="member">
+	SELECT * FROM MEMBER WHERE MEMBER_ID = #{memberId}
+	</select>
+
+
+
+
+</mapper>
+
+
+
+
+
+

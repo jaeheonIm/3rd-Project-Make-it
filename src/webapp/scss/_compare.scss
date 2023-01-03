@@ -1,0 +1,44 @@
+/* Compare CSS */
+
+.compare-list {
+    position: relative;
+
+    .table tbody tr td {
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    td.action a {
+        background-color: $bg-gray;
+        border-radius: 50%;
+        display: inline-block;
+        font-size: 17px;
+        height: 40px;
+        text-align: center;
+        width: 40px;
+        padding: 0;
+
+        i {
+            line-height: 40px;
+        }
+
+        &.compare_addTocart {
+            background-color: $hover-color;
+            color: $white-color;
+        }
+
+        &.compare_addWishlist {
+            background-color: $secondary-color;
+            color: $white-color;
+        }
+
+        &.remove_from_compare {
+            background-color: $dark-color;
+            color: $white-color;
+        }
+    }
+
+    .rating i {
+        color: $yellow-color;
+    }
+}

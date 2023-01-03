@@ -1,0 +1,180 @@
+.FundingOpen_fundingOpenContainer__1.FundingOpen_active__1 {
+    transform: translateY(8px);
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+}
+.FundingOpen_fundingOpenContainer__1 {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    transform: translateY(-10px);
+    transition-property: transform,visibility,opacity;
+    transition-duration: .45s;
+    visibility: hidden;
+    opacity: 0;
+    z-index: 100;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    box-shadow: 0 3px 3px -1px rgb(10 22 70 / 10%), 0 0 5px 0 rgb(10 22 70 / 6%);
+    background-color: #fff;
+    min-width: 420px;
+    padding: 36px 16px 24px;
+    pointer-events: none;
+}
+
+
+.FundingOpen_fundingOpenContainer__1 .FundingOpen_btnLink__1 .FundingOpen_menuWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    color: #212529;
+    width: 100%;
+    line-height: 28px;
+    letter-spacing: -.6px;
+    font-size: 14px;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.FundingOpen_menuTitle__1 {
+	display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    color: #212529;
+    width: 100%;
+    line-height: 28px;
+    letter-spacing: -.6px;
+    font-size: 14px;
+    font-weight: 700;
+    font-style: normal;
+	
+}
+.FundingOpen_fundingOpenContainer__1 button.FundingOpen_btnLink__1 {
+    cursor: pointer;
+}
+.FundingOpen_fundingOpenContainer__1 .FundingOpen_btnLink__1 {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    column-gap: 16px;
+}
+
+
+.FundingOpen_fundingOpenContainer__1 .FundingOpen_btnLink__1 .FundingOpen_menuWrap.FundingOpen_normal {
+    align-items: flex-start;
+}
+.FundingOpen_fundingOpenContainer__1 .FundingOpen_btnLink__1 .FundingOpen_menuWrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    width: 100%;
+}
+
+.FundingOpen_fundingOpenContainer__1 .FundingOpen_btnLinkIcon__2C1YT {
+    font-size: 24px;
+    color: #adb5bd;
+    margin: auto 0;
+    cursor: pointer;
+}
+
+.Divider_divider__2KIPe.Divider_horizontal__1_4Nb.Divider_spacing5__3m1_S {
+    margin: 16px 0;
+}
+.Divider_divider__2KIPe.Divider_horizontal__1_4Nb.Divider_lightBG__FsD3J {
+    background-color: #f2f4f6;
+    opacity: 1;
+}
+.Divider_divider__2KIPe.Divider_horizontal__1_4Nb {
+    margin: 16px 0;
+    background-color: #f2f4f6;
+    height: 1px;
+}
+.Divider_divider__2KIPe {
+    margin: 0;
+    border: 0;
+}
+
+.FundingOpen_fundingOpenContainer__1 .FundingOpen_category {
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin: 12px 12px 0 0;
+    padding: 8px;
+    color: #212529;
+    line-height: 28px;
+    letter-spacing: -.3px;
+    font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
+    font-weight: 500;
+}
+.NewProjectBtn.Button_tertiaryGrey.Button_contained{
+	background-color: #00c4c4;
+    color: #ffffff;
+    padding: 7px;
+    border-radius: 7px;
+    margin: 9px;
+}
+
+.NewProjectBtn span {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: top;
+}
+
+@media screen and (min-width: 1097px)
+.NotificationList_listContainer__1  {
+    position: absolute;
+    top: 54px;
+    bottom: 47px;
+    width: 100%;
+    height: 292px;
+}
+/* .NotificationList_listContainer__1 {
+    height: 100%;
+} */
+.fundScroll {
+  	/*height: 60px;
+	overflow-y: scroll;*/
+}
+
+.NotificationListItem_info .NotificationListItem_listItem__1{
+    margin-left: 48px;
+}
+.NotificationListItem_title {
+    display: block;
+    margin: 4px 0 0;
+    word-break: break-all;
+    color: #212529;
+    line-height: 20px;
+    letter-spacing: 0;
+    font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.NotificationListItem_time__1 {
+    line-height: 18px;
+    letter-spacing: 0;
+    font-size: 12px;
+    font-weight: 400;
+    font-style: normal;
+    padding: 1px 0;
+    color: #495057;
+    margin-left: 100px;
+}
+
+.NotificationListItem_typeLine {
+    display: flex;
+    flex-direction: row;
+    height: 20px;
+    margin-bottom: 20px;
+}

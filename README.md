@@ -1,4 +1,4 @@
-# 3rd-Project-MakeIt
+# 3rd-Project-Make-It
 
 크라우드 펀딩 사이트
 
